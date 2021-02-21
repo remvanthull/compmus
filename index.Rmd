@@ -243,7 +243,7 @@ step %>%
 ```
 
 *** 
-Previous visualizations, suggest that *15 Steps* is the "happiest" radiohead song when considering valence and energy. To further look into what makes the song sound relatively happy, we can look into the chromatic features of the song using a chromagram. The chromagram pictured here uses a Euclidean norm.
+Previous visualizations, suggest that *15 Steps* is the "happiest" radiohead song when considering valence and energy. To further look into what makes the song sound relatively happy, we can look into the chromatic features of the song using a chromagram. The chromagram pictured here uses a Euclidean norm. (I don't really have anything useful to say about the chromagrams yet.)
 
 ### Saddest song
 
