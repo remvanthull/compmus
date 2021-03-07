@@ -61,6 +61,138 @@ test2 <- radiohead %>%
     summarize(meanEnergy = mean(energy), meanValence = mean(valence), meanLoudness = mean(loudness), meanTempo = mean(tempo))
 ```
 
+
+```{r, echo=FALSE}
+circshift <- function(v, n) {
+  if (n == 0) v else c(tail(v, n), head(v, -n))
+}
+
+#      C     C#    D     Eb    E     F     F#    G     Ab    A     Bb    B
+major_chord <-
+  c(   1,    0,    0,    0,    1,    0,    0,    1,    0,    0,    0,    0)
+minor_chord <-
+  c(   1,    0,    0,    1,    0,    0,    0,    1,    0,    0,    0,    0)
+seventh_chord <-
+  c(   1,    0,    0,    0,    1,    0,    0,    1,    0,    0,    1,    0)
+
+chord_templates <-
+  tribble(
+    ~name, ~template,
+    "Gb:7", circshift(seventh_chord, 6),
+    "Gb:maj", circshift(major_chord, 6),
+    "Bb:min", circshift(minor_chord, 10),
+    "Db:maj", circshift(major_chord, 1),
+    "F:min", circshift(minor_chord, 5),
+    "Ab:7", circshift(seventh_chord, 8),
+    "Ab:maj", circshift(major_chord, 8),
+    "C:min", circshift(minor_chord, 0),
+    "Eb:7", circshift(seventh_chord, 3),
+    "Eb:maj", circshift(major_chord, 3),
+    "G:min", circshift(minor_chord, 7),
+    "Bb:7", circshift(seventh_chord, 10),
+    "Bb:maj", circshift(major_chord, 10),
+    "D:min", circshift(minor_chord, 2),
+    "F:7", circshift(seventh_chord, 5),
+    "F:maj", circshift(major_chord, 5),
+    "A:min", circshift(minor_chord, 9),
+    "C:7", circshift(seventh_chord, 0),
+    "C:maj", circshift(major_chord, 0),
+    "E:min", circshift(minor_chord, 4),
+    "G:7", circshift(seventh_chord, 7),
+    "G:maj", circshift(major_chord, 7),
+    "B:min", circshift(minor_chord, 11),
+    "D:7", circshift(seventh_chord, 2),
+    "D:maj", circshift(major_chord, 2),
+    "F#:min", circshift(minor_chord, 6),
+    "A:7", circshift(seventh_chord, 9),
+    "A:maj", circshift(major_chord, 9),
+    "C#:min", circshift(minor_chord, 1),
+    "E:7", circshift(seventh_chord, 4),
+    "E:maj", circshift(major_chord, 4),
+    "G#:min", circshift(minor_chord, 8),
+    "B:7", circshift(seventh_chord, 11),
+    "B:maj", circshift(major_chord, 11),
+    "D#:min", circshift(minor_chord, 3)
+  )
+```
+
+### (NEW) What makes an album happy/sad?
+
+```{r}
+first <-
+  get_playlist_audio_features(
+    "thesoundsofspotify",
+    "1S7Bn1zPkqKler2p1MmE2B"
+  ) %>%
+  slice(1:30) %>%
+  add_audio_analysis()
+last <-
+  get_playlist_audio_features(
+    "thesoundsofspotify",
+    "0hlGldKBhW9PosAEdFylRJ"
+  ) %>%
+  slice(1:30) %>%
+  add_audio_analysis()
+
+happy <-
+  get_playlist_audio_features(
+    "thesoundsofspotify",
+    "7eV9P6cpSRyYKuLegRNbbe"
+  ) %>%
+  slice(1:30) %>%
+  add_audio_analysis()
+sad <-
+  get_playlist_audio_features(
+    "thesoundsofspotify",
+    "0hlGldKBhW9PosAEdFylRJ"
+  ) %>%
+  slice(1:30) %>%
+  add_audio_analysis()
+
+compare1 <-
+  first %>%
+  mutate(genre = "Pablo Honey") %>%
+  bind_rows(last %>% mutate(genre = "A Moon Shaped Pool"))
+
+compare2 <-
+  happy %>%
+  mutate(genre = "In Rainbows") %>%
+  bind_rows(sad %>% mutate(genre = "A Moon Shaped Pool"))
+```
+
+```{r}
+compare2 %>%
+  mutate(
+    timbre =
+      map(
+        segments,
+        compmus_summarise,
+        timbre,
+        method = "mean"
+      )
+  ) %>%
+  select(genre, timbre) %>%
+  compmus_gather_timbre() %>%
+  ggplot(aes(x = basis, y = value, fill = genre)) +
+  geom_violin() +
+  scale_fill_viridis_d() +
+    ylim(-55, 50) +
+
+  labs(x = "Spotify Timbre Coefficients", y = "", fill = "Album")
+```
+
+***
+As *A Moon Shaped Pool* is often viewed as the saddest Radiohead album and *In Rainbows* as the happiest, looking at the timbre coefficients might be an interesting way of determining what captures the albums' moods. From the plot shown here, it's clear that the albums significantly differ in distribution of the first coefficient, with *A Moon Shaped Pool* containing lower values. This makes sense as this coefficient is associated with loudness: sad music is most likely to be more quiet than happy music. For the rest of the coefficients, the values are either alike or the meaning of the coefficient is unclear.
+
+### Introduction
+Rachel van 't Hull - 12179299
+
+The corpus I chose contains all 101 songs from Radiohead's 9 studio albums, that is *Pablo Honey*, *The Bends*, *OK Computer*, *Kid A*, *Amnesiac*, *Hail to the Thief*, *In Rainbows*, *The King of Limbs* and *A Moon Shaped Pool*. While all of Radiohead's albums can be labeled as rock, the band has experimented with different sounds along the way, making each individual album to contain a distinct sound in terms of instruments, style and theme, which makes the corpus very fit for a computational musicological research.
+
+Though each album carries a distinct feel, the songs within an album often range from quiet to grunge. For example, perhaps Radiohead's most famous song, *Creep*, has a very different sound from the rest of grunge album *Pablo Honey*. For *The Bends*, whereas *Fake Plastic Trees* is a soft and calm song, *My Iron Lung* returns to hard-rock sounds. On the other hand, *Paranoid Android* is very typical for *OK Computer*, containing the "sci-fi" sounds present throughout the album. Furthermore, while most albums are made in different phases of the band's style, the album *Amnesiac* in general has very similar sounds to *Kid A* as they were recorded during the same sessions.
+
+The variation in both Radiohead's different albums as well as the individual songs within an album makes it interesting to not only analyze how Radiohead's style has evolved over time, but also see whether a computational model regards songs from different albums as similar. For both these questions, the factors contributing to the outcomes could be very interesting in describing Radiohead's different sounds within its discography in a computational, musicological manner.
+
 ### Repitition and structure in Radiohead's most famous songs
 
 ```{r}
@@ -233,14 +365,6 @@ For *Fake Plastic Trees*, the chroma-based self-similarity matrix is a lot less 
 
 It's remarkable that the chroma-based self-similarity matrix for *Fake Platic Trees* is so unclear compared to that of *Creep*, as both have a repeating melody.
 
-### Introduction
-Rachel van 't Hull - 12179299
-
-The corpus I chose contains all 101 songs from Radiohead's 9 studio albums, that is *Pablo Honey*, *The Bends*, *OK Computer*, *Kid A*, *Amnesiac*, *Hail to the Thief*, *In Rainbows*, *The King of Limbs* and *A Moon Shaped Pool*. While all of Radiohead's albums can be labeled as rock, the band has experimented with different sounds along the way, making each individual album to contain a distinct sound in terms of instruments, style and theme, which makes the corpus very fit for a computational musicological research.
-
-Though each album carries a distinct feel, the songs within an album often range from quiet to grunge. For example, perhaps Radiohead's most famous song, *Creep*, has a very different sound from the rest of grunge album *Pablo Honey*. For *The Bends*, whereas *Fake Plastic Trees* is a soft and calm song, *My Iron Lung* returns to hard-rock sounds. On the other hand, *Paranoid Android* is very typical for *OK Computer*, containing the "sci-fi" sounds present throughout the album. Furthermore, while most albums are made in different phases of the band's style, the album *Amnesiac* in general has very similar sounds to *Kid A* as they were recorded during the same sessions.
-
-The variation in both Radiohead's different albums as well as the individual songs within an album makes it interesting to not only analyze how Radiohead's style has evolved over time, but also see whether a computational model regards songs from different albums as similar. For both these questions, the factors contributing to the outcomes could be very interesting in describing Radiohead's different sounds within its discography in a computational, musicological manner.
 
 
 ### Comparing the albums 1
