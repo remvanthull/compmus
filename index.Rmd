@@ -116,7 +116,7 @@ chord_templates <-
   )
 ```
 
-### Lowest versus highest energy
+### (NEW) Lowest versus highest energy
 
 ```{r}
 glass_eyes <- get_tidy_audio_analysis("0uOeAmfdyaekD2RIGwCDwq")
@@ -130,7 +130,7 @@ glass_eyes %>%
   ggplot(aes(x = time, y = bpm, fill = power)) +
   geom_raster() +
   scale_fill_viridis_c(guide = "none") +
-  labs(x = "Time (s)", y = "Tempo (BPM)") +
+  labs(x = "Time (s)", y = "Tempo (BPM)", title = "Glass Eyes") +
   theme_classic()
 
 bodysnatchers %>%
@@ -138,7 +138,7 @@ bodysnatchers %>%
   ggplot(aes(x = time, y = bpm, fill = power)) +
   geom_raster() +
   scale_fill_viridis_c(guide = "none") +
-  labs(x = "Time (s)", y = "Tempo (BPM)") +
+  labs(x = "Time (s)", y = "Tempo (BPM)", title = "Bodysnatchers") +
   theme_classic()
 ```
 
@@ -151,7 +151,7 @@ For *Bodysnatchers* however, the complete opposite holds. The tempo is very clea
 
 
 
-### (NEW) What makes an album happy/sad?
+### What makes an album happy/sad?
 
 ```{r}
 first <-
