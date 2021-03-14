@@ -116,6 +116,41 @@ chord_templates <-
   )
 ```
 
+### Lowest versus highest energy
+
+```{r}
+glass_eyes <- get_tidy_audio_analysis("0uOeAmfdyaekD2RIGwCDwq")
+bodysnatchers <- get_tidy_audio_analysis("4pWIwnnqx8k01fuF95UMIg")
+```
+
+```{r, echo = FALSE, message = FALSE, figures-side, fig.show="hold", out.width="50%"}
+
+glass_eyes %>%
+  tempogram(window_size = 8, hop_size = 1, cyclic = FALSE) %>%
+  ggplot(aes(x = time, y = bpm, fill = power)) +
+  geom_raster() +
+  scale_fill_viridis_c(guide = "none") +
+  labs(x = "Time (s)", y = "Tempo (BPM)") +
+  theme_classic()
+
+bodysnatchers %>%
+  tempogram(window_size = 8, hop_size = 1, cyclic = FALSE) %>%
+  ggplot(aes(x = time, y = bpm, fill = power)) +
+  geom_raster() +
+  scale_fill_viridis_c(guide = "none") +
+  labs(x = "Time (s)", y = "Tempo (BPM)") +
+  theme_classic()
+```
+
+***
+According to the Spotify API, *Glass Eyes* is Radiohead's least energetic song with a recorded energy of 0.110, and *Bodysnatchers* is the band's most energetic song with an energy of 0.976.
+
+The tempogram of *Glass Eyes* shows that the song's tempo is very inconsistent. When listening to the song, it becomes clear why: the song is free of any percussion, and mostly made up of a calm piano melody that was most likely played without following a metronome/tempo (and rather on intuition). This makes the song very hard to tap to, as there appears to be no real tempo even though the Spotify API records a tempo of about 114 BPM. Not being able to detect a tempo in addition to the sad sounding melody makes the song sound even less energetic.
+
+For *Bodysnatchers* however, the complete opposite holds. The tempo is very clear and steady, and also quite high. Whereas the Spotify API records a tempo of about 167 BPM, the tempogram displays a very clear line at two times this tempo (334 BPM). In fact, the tempogram does not show anything at the actual tempo of 167 BPM. In any case, the clear, steady and high tempo of the song make it very energetic.
+
+
+
 ### (NEW) What makes an album happy/sad?
 
 ```{r}
