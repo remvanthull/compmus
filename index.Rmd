@@ -154,10 +154,22 @@ test <- radiohead %>%
 ![](bg2.jpg)
 
 ***
+The corpus I chose for my analysis contains all 101 songs from Radiohead's 9 studio albums, that is "Pablo Honey", "The bends", "OK Computer", "Kid A", "Amnesiac", "Hail to the Thief", "In Rainbows", "The King of Limbs" and "A Moon Shaped Pool". Radiohead is one of my all-time favorite bands. Over the course of their nine albums, they have changed their musical style drastically a couple of times. To me, each of their albums carries a distinct sound and feeling associated with it, and I am keen to find out the musical details behind their style evolution.<br>
+
+The questions this portfolio will answer are:<br>
+
+* How did Radiohead's style change over time?
+* How does a classifier perform on Radiohead's different albums?
+
+
+Though each album is centered around a main theme, the songs within an album often range in sound. For example, *The Bends*' Fake Plastic Trees" is a soft and calm song, but "My Iron Lung" is hard-rock to say the least. On the other hand,  the album "Amnesiac" in general has very similar sounds to "Kid A" as they were recorded during the same sessions. These differences and similarities can make it difficult to track meaningful changes.<br>
+
+A short history regarding Radiohead's discography:<br>
+
 ***Pablo Honey***, **1993** <br>
 The band’s grunge sounding debut album, *Pablo Honey*, sets itself apart from the rest of the band’s album and was made before Radiohead found their own sound.  The grunge sounding album caused Radiohead to be compared to bands like Nirvana. The album did not get much critical acclaim, except from the hit-single *Creep*, which has grown out to be Radiohead’s most famous song.<br>
 ***The Bends***, **1995** <br>
-*The Bends* is more polished and complex compared to the band’s first album, and contains a greater use of keyboards, as well as the band’s first introduction to the use of effects. The album received stronger reviews for its songwriting and performances, and songs made their way to the charts, with *Street Spirit (Fade Out)* placing them in the top 5. The album was said to be influenced by bands like Pink Floyd.
+*The Bends* is more polished and complex compared to the band’s first album, and contains a greater use of keyboards, as well as the band’s first introduction to the use of effects. The album received stronger reviews for its songwriting and performances, and songs made their way to the charts, with *Street Spirit (Fade Out)* placing them in the top 5. The album was said to be influenced by bands like Pink Floyd.<br>
 ***OK Computer***, **1997** <br>
 Instead building on the succes *The Bends* by releasing an album in a similar style, Radiohead instead took their musical style in the opposite direction with *OK Computer*, incorporating an ambient, avant-garde and electronic influences, expressing feelings of emptiness that the band felt were present in Western society. *OK Computer* quickly grew out to be the band’s most famous album and still is to this day. The massive succes and critical acclaim of the album introduced the band to commercial succes around the world and sold out shows in big arenas. <br>
 ***Kid A***, **2000**<br>
@@ -390,8 +402,10 @@ The confusion matrix on the left show the classificaiton results of a random for
 ![](BESTE2.png){width=70%}<br><br>
 It can be seen that the classifier managed to distinguish  ***Pablo Honey*** and ***Hail To The Thief*** particularly well. For the other albums, it performed significantly less good, especially ***Amnesiac*** and ***The King Of Limbs*** with 0 correct classifications.<br><br>
 What is striking though, is that there seem to be groups within the misclassifications:
+
 * Group 1: ***Pablo Honey***, ***The Bends*** and ***OK Computer***
 * Group 2: ***Kid A***, ***Amnesiac***, ***Hail To The Thief***, ***In Rainbows*** and ***A Moon Shaped Pool***
+
 ***The King Of Limbs*** does not fall into any of these two groups, which can be explained by the fact that it is a very experimental album and contains very few songs.<br><br>
 The groups are often seen as the two main style periods of Radiohead, as they started incorporating their electronic sound with *Kid A*. The fact that acousticness and the second timbre component, often associated with low frequencies/darkness, were most important during classifying support this. When looking at the graph showing these features, we can see that the songs of group 1 are mostly concentrated in the upper left corner, while the songs of the second group are more towards the right and bottom. <br><br>
 It appears that the classifier has a hard time accurately distinguishing each album, but can distinguish the two main different style periods radiohead has had.
@@ -402,7 +416,7 @@ It appears that the classifier has a hard time accurately distinguishing each al
 ![](box.png){width=90%}
 
 ***
-As said before, ***Amnesiac*** is often said to be ***Kid A***'s "B-side" as both albums were recorded during the same sessions, but the band claims the albums each portray something different: ***Kid A*** portraying watching depression from a distance, and ***Amnesiac*** portraying experiencing it first hand. Within our previous classifier, the albums, along with most albums within that style period, were hard to distinguish. When training a random forest classifier on only *Kid A* and *Amnesiac* using all features, we obtain the following importance for each feature<br>
+As said before, ***Amnesiac*** is often said to be ***Kid A***'s "B-side" as both albums were recorded during the same sessions, but the band claims the albums each portray something different: ***Kid A*** portraying watching depression from a distance, and ***Amnesiac*** portraying experiencing it first hand. Within our previous classifier, the albums, along with most albums within that style period, were hard to distinguish. When training a random forest classifier on only *Kid A* and *Amnesiac* using all features, we obtain the following importance for each feature<br><br>
 ![](kida.png){width=70%}<br><br><br>
 and the following (bad) precision and recall when classiying the albums <br>
 ![](slecht.png){width=70%}<br><br>
