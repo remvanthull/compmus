@@ -150,7 +150,7 @@ test <- radiohead %>%
 
 ```
 
-### **The Evolution of Radiohead** {data-commentary-width=700}
+### **The Evolution of Radiohead** {data-commentary-width=500}
 ![](bg2.jpg)
 
 ***
@@ -173,7 +173,7 @@ The band’s first self-released album continues on their new sound mixture of e
 ***A Moon Shaped Pool***, **2016** <br>
 The recording sessions of Radiohead’s most recent album were marred by the death of Godrich's father and Yorke's separation from his wife who died from cancer in 2016. The songs are orchestral, haunting and slow. The album also contains some songs that the band worked on throughout their whole discography, making the album a bit eclectic of Radiohead’s different styles.<br>
 
-### **A general overview of changes throughout Radiohead's nine studio albums** {data-commentary-width=600}
+### **A general overview of changes throughout Radiohead's nine studio albums** {data-commentary-width=400}
 ```{r}
 line_plot <- ggplot(test, aes(x=factor(playlist, level=level_order), group = 1)) + 
   geom_line(aes(y = meanValence, colour = "Valence", group=1, alpha=0.5, text=paste("Album:", playlist, "\nValence:", meanValence)), show.legend = FALSE) + 
@@ -218,7 +218,7 @@ For **tempo**, the most remarkable finding is that it indeed increases on **Kid 
 Weirdly enough, **acousticness** is low from ***Pablo Honey*** to ***OK Computer***, high on ***Kid A*** and ***Amnesiac*** and slightly decreases for the two albums after that. The opposite was to be expected, as it is on ***Kid A*** and ***Amnesiac*** that the band used mostly electronic sounds and barely analog instruments.
 
 
-### **Is there a "Radiohead Formula"? (1/2)**
+### **Is there a "Radiohead Formula"? (1/2)**{data-commentary-width=400}
 ```{r}
 all_songs <- ggplot(radiohead, aes(x = valence, y = energy, size = loudness, color = factor(playlist_name, level = level_order), label = track.name, text=paste("Song:", track.name, "\nAlbum:", track.album.name, "\nEnergy:", energy, "\nValence:", valence, "\nLoudness:", loudness))) +  
   geom_point(show.legend = T, alpha=0.8) +
@@ -245,7 +245,7 @@ When looking at the energy and valence of each song, there seems to be a logarit
 The point that deviates from the pattern the most is ***Fitter Happier*** from ***OK Computer***.
 
 
-### **Is there a "Radiohead Formula"? (2/2)**
+### **Is there a "Radiohead Formula"? (2/2)**{data-commentary-width=400}
 
 ```{r}
 all_songs2 <- ggplot(radiohead, aes(x = valence, y = energy, size = loudness, color = factor(playlist_name, level = level_order), label = track.name, text=paste("Song:", track.name, "\nEnergy:", energy, "\nValence:", valence, "\nLoudness:", loudness))) +  
@@ -280,7 +280,7 @@ Energy and valence fit nice linear lines for each album, with energy increasing 
 Furthermore, some albums' features are more clustered than others. ***Pablo Honey***, ***OK Computer***, ***A Moon Shaped Pool*** and ***Amnesiac*** seem to be clustered around 1 point (with some outliers), ***Kid A*** and ***In Rainbows*** around 2 points and ***The Bends*** around 3. ***Hail To The Thief*** and ***The King Of Limbs*** don't obey to a certain cluster, with valence and energy differing most throughout the individual songs.
 
 
-### **A closer look: keys, modes, tempos and popularities within each album**  {data-commentary-width=600}
+### **A closer look: keys, modes, tempos and popularities within each album**  {data-commentary-width=400}
 
 ```{r}
 albums_tempos <- radiohead %>%
@@ -380,7 +380,7 @@ With ***Hail To The Thief***’s ***There, There***, we regain structure and rep
 ***Lotus Flower*** from the experimental album ***The King Of Limbs*** stands out again, as it contains no visible repititions, even though the song is made up of loops and repeated samples. This is most likely due to the fact that there is no pattern in how the different loops are overlayed. The borders between chorusses and verses are however very distinct.<br><br>
 Lastly, ***Daydreaming*** from ***A Moon Shaped Pool*** contains a very chaotic structure. Though there are some repititions and homogenuities to be found when looking closely, the song seems to be very inconsistent. This is due to the fact that the song is a mixture of several piano melodies layered with several electronic and orchestral sounds of short duration, setting in randomly and thus making the sound quite unstructured.
 
-### **Does a classifier model agree that each Radiohead album has a distinct style?** {data-commentary-width=600}
+### **Does a classifier model agree that each Radiohead album has a distinct style?** {data-commentary-width=400}
 ![](betere.png){width=90%}<br><br>
 ![](dingding.png){width=90%}
 
@@ -396,21 +396,21 @@ What is striking though, is that there seem to be groups within the misclassific
 The groups are often seen as the two main style periods of Radiohead, as they started incorporating their electronic sound with *Kid A*. The fact that acousticness and the second timbre component, often associated with low frequencies/darkness, were most important during classifying support this. When looking at the graph showing these features, we can see that the songs of group 1 are mostly concentrated in the upper left corner, while the songs of the second group are more towards the right and bottom. <br><br>
 It appears that the classifier has a hard time accurately distinguishing each album, but can distinguish the two main different style periods radiohead has had.
 
-### **To B-side or not to B-side: Kid A versus Amnesiac** {data-commentary-width=600}
+### **To B-side or not to B-side: Kid A versus Amnesiac** {data-commentary-width=400}
 
 ![](yes.png){width=90%} <br><br>
 ![](box.png){width=90%}
 
 ***
 As said before, ***Amnesiac*** is often said to be ***Kid A***'s "B-side" as both albums were recorded during the same sessions, but the band claims the albums each portray something different: ***Kid A*** portraying watching depression from a distance, and ***Amnesiac*** portraying experiencing it first hand. Within our previous classifier, the albums, along with most albums within that style period, were hard to distinguish. When training a random forest classifier on only *Kid A* and *Amnesiac* using all features, we obtain the following importance for each feature<br>
-![](kida.png){width=90%}<br><br><br>
+![](kida.png){width=70%}<br><br><br>
 and the following (bad) precision and recall when classiying the albums <br>
 ![](slecht.png){width=70%}<br><br>
 <br> meaning the classifier mixed the albums up most of the time. However, when taking the importance of features into account, removing unimportant features greatly improves classification. When taking the first four features, so **loudness** and **the twelth, ninth and sixth timbre component**, we get the results as displayed in the confusion matrix on the left. Further looking into a comparison of the timbre components of both the albums confirms that the albums differ in said components most. <br><br>
 There thus indeed seems to be a difference between *Kid A* and *Amnesiac*. However, the model needed to look specifically at timbre components to distinguish them, and what those timbre components exactly are in terms of sound are hard to determine. With that, timbre componentsare hard for humans to hear, so which leaves only loudness as a metric for humans to distinguish the albums by ear, possibly contributing to the reason that humans *can't* and a computer *can* see the difference between the albums.
 
 
-### **A Moon Shaped Pool of tears: what makes Radiohead's last album sound so sad?** {data-commentary-width=600}
+### **A Moon Shaped Pool of tears: what makes Radiohead's last album sound so sad?** {data-commentary-width=400}
 
 ![](Glasseyes.png){width=90%} <br><br>
 ![](Bodysnatchers.png){width=90%}
