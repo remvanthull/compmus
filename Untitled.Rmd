@@ -1,0 +1,900 @@
+---
+title: "CompMus project tester"
+author: "Rachel van 't Hull"
+date: "2/10/2021"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    storyboard: true
+    css: stylesheet.css
+    
+---
+
+
+```{r setup, include=FALSE}
+library(readr)
+library(leaflet)
+library(DT)
+library(lubridate)
+library(flexdashboard)
+library(tidyverse)
+library(spotifyr)
+library(ggrepel)
+library(grid)
+library(plotly)
+library(compmus)
+library(gridExtra)
+library(dplyr)
+library(tidymodels)
+library(ggdendro)
+library(heatmaply)
+library(hrbrthemes)
+library("RColorBrewer")
+
+get_conf_mat <- function(fit) {
+  outcome <- .get_tune_outcome_names(fit)
+  fit %>% 
+    collect_predictions() %>% 
+    conf_mat(truth = outcome, estimate = .pred_class)
+}  
+
+get_pr <- function(fit) {
+  fit %>% 
+    conf_mat_resampled() %>% 
+    group_by(Prediction) %>% mutate(precision = Freq / sum(Freq)) %>% 
+    group_by(Truth) %>% mutate(recall = Freq / sum(Freq)) %>% 
+    ungroup() %>% filter(Prediction == Truth) %>% 
+    select(class = Prediction, precision, recall)
+}  
+
+```
+
+```{r}
+forest_model <-
+  rand_forest() %>%
+  set_mode("classification") %>% 
+  set_engine("ranger", importance = "impurity")
+```
+
+```{r}
+
+pablo_honey <- get_playlist_audio_features("", "1S7Bn1zPkqKler2p1MmE2B")
+the_bends <- get_playlist_audio_features("", "00aSCr8pdsbOQvmcj41q6z")
+ok_computer <- get_playlist_audio_features("", "6yPwcbgFAUXfSsKD9LPnj8")
+kid_a <- get_playlist_audio_features("", "0H7oSmnVe8kctcTbr6hYda")
+amnesiac <- get_playlist_audio_features("", "7fuj13FdVe98ZPIo9BBWGj")
+hail_to_the_thief <- get_playlist_audio_features("", "3GvfHR5ZF5OqeX5YdwCsIQ")
+in_rainbows <- get_playlist_audio_features("", "7eV9P6cpSRyYKuLegRNbbe")
+the_king_of_limbs <- get_playlist_audio_features("", "2701aFzj6VyyBuSXNo7DfD")
+a_moon_shaped_pool <- get_playlist_audio_features("", "0hlGldKBhW9PosAEdFylRJ")
+
+radiohead <-
+  bind_rows(
+    pablo_honey %>% mutate(playlist = "Pablo Honey"),
+    the_bends %>% mutate(playlist = "The Bends"),
+    ok_computer %>% mutate(playlist = "OK Computer"),
+    kid_a %>% mutate(playlist = "Kid A"),
+    amnesiac %>% mutate(playlist = "Amnesiac"),
+    hail_to_the_thief %>% mutate(playlist = "Hail To The Thief"),
+    in_rainbows %>% mutate(playlist = "In Rainbows"),
+    the_king_of_limbs %>% mutate(playlist = "The King Of Limbs"),
+    a_moon_shaped_pool %>% mutate(playlist = "A Moon Shaped Pool")
+  )
+
+level_order <- c("Pablo Honey", "The Bends", "OK Computer", "Kid A", "Amnesiac", "Hail To The Thief", "In Rainbows", "The King Of Limbs", "A Moon Shaped Pool")
+```
+
+
+```{r}
+test <- radiohead %>%
+    group_by(playlist) %>%
+    summarize(meanEnergy = mean(energy), 
+              meanValence = mean(valence), 
+              meanLoudness = mean((loudness-min(loudness))/(max(loudness)-min(loudness))), 
+              meanTempo = mean((tempo-min(tempo))/(max(tempo)-min(tempo))), 
+              meanAcousticness = mean(acousticness))
+
+```
+
+### The Evolution of Radiohead {data-commentary-width=400}
+
+### An general overview of changes through Radiohead's nine studio albums
+
+```{r}
+line_plot <- ggplot(test, aes(x=factor(playlist, level=level_order), group = 1)) + 
+  geom_line(aes(y = meanValence, colour = "Valence", group=1, alpha=0.5), show.legend = FALSE) + 
+  geom_text(aes(x=0.6, y=meanValence[[7]], label='Valence'), col='deepskyblue3', size =2.5) +
+  geom_line(aes(y = meanEnergy, colour="Energy", group=2, alpha=0.5)) +
+  geom_text(aes(x=0.6, y=meanEnergy[[7]], label='Energy'), col='green3', size =2.5) +
+  geom_line(aes(y= meanLoudness, colour="Loudness", group=3, alpha=0.5)) +
+  geom_text(aes(x=0.5, y=meanLoudness[[7]], label='Loudness'), col='red', size =2.5) +
+  geom_line(aes(y= meanTempo, colour="Tempo", group=4, alpha=0.5)) +
+  geom_text(aes(x=0.6, y=meanTempo[[7]], label='Tempo'), col='purple', size =2.5) +
+  geom_line(aes(y = meanAcousticness, colour = "Acousticness", group=5, alpha=0.5)) + 
+  geom_text(aes(x=0.45, y=meanAcousticness[[7]], label='Acousticness'), col='black', size =2.5) +
+  scale_colour_manual("", 
+                      breaks = c("Valence", "Energy", "Loudness", "Tempo", "Acousticness"),
+                      values = c("deepskyblue3", "green3", "red", "purple", "black"))+
+  scale_y_continuous(         # Fine-tune the y axis in the same way.
+    limits = c(0, 1)) +
+  scale_x_discrete(guide = guide_axis(n.dodge=2)) +
+  theme(axis.text.x = element_text(size = 7)) +
+    labs(
+    x = "",
+    y = "Value"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle=30, hjust="1")
+  )+
+  scale_x_discrete(expand = c(0.14, 0)) +
+   theme(legend.position = "none")
+
+ggplotly(line_plot)
+```
+
+### Is there a "Radiohead Formula"?
+
+```{r}
+all_songs <- ggplot(radiohead, aes(x = valence, y = energy, size = loudness, color = factor(playlist_name, level = level_order), label = track.name, text=paste("Song:", track.name, "\nAlbum:", track.album.name, "\nEnergy:", energy, "\nValence:", valence, "\nLoudness:", loudness))) +  
+  geom_point(show.legend = T, alpha=0.8) +
+    scale_size_continuous(      # Fine-tune the sizes of each point.
+    trans = "exp",            # Use an exp transformation to emphasise loud.
+  ) +
+  labs(
+    title = "Valence, Energy and Loudness for each song",
+    x = "Valence",
+    y = "Energy"
+  ) +
+  theme_light()+
+  theme(plot.title = element_text(hjust = 0.5)) +
+geom_smooth(aes(group = 1), method = "lm", formula= (y ~ log(x)), se = TRUE) +
+  theme(legend.title = element_blank())
+  
+ggplotly(all_songs, tooltip = c("text"))
+```
+
+
+```{r}
+all_songs2 <- ggplot(radiohead, aes(x = valence, y = energy, size = loudness, color = factor(playlist_name, level = level_order), label = track.name, text=paste("Song:", track.name, "\nEnergy:", energy, "\nValence:", valence, "\nLoudness:", loudness))) +  
+  geom_point(show.legend = T, alpha=0.8) +
+    scale_size_continuous(      # Fine-tune the sizes of each point.
+    trans = "exp",            # Use an exp transformation to emphasise loud.
+  ) +
+  labs(
+    title = "Valence, Energy and Loudness per Album",
+    x = "Valence",
+    y = "Energy"
+  ) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  facet_wrap(~factor(playlist_name, level=level_order)) +
+geom_smooth(aes(group = 1), method = "lm", se = FALSE, size=0.7) +
+    scale_x_continuous(         # Fine-tune the x axis.
+    limits = c(0, 0.85),
+    breaks = c(0, 0.50, 1)   # Use grid-lines for quadrants only.
+  ) +
+  scale_y_continuous(         # Fine-tune the y axis in the same way.
+    limits = c(0, 1.1),
+    breaks = c(0, 0.50, 1)
+  ) +
+    theme_light()+
+     theme(legend.position = "none")
+  
+ggplotly(all_songs2, tooltip = c("text"))
+```
+
+### A closer look: the keys, modes, tempos and popularities within each album
+
+```{r}
+albums_tempos <- radiohead %>%
+  ggplot(aes(x = factor(playlist_name, level=level_order), y = tempo, fill = playlist_name)) +
+    labs(
+    x = "",
+    y = "Tempo",
+    title = "Tempos"
+  ) +
+  geom_boxplot(aes(alpha=0.5))+
+  theme_light() +
+    theme(
+        axis.text.x = element_text(angle=30, hjust="1"), legend.position = "none")
+```
+
+```{r}
+albums_modes <- radiohead %>%
+  ggplot(aes(x = factor(mode), fill = playlist_name)) +
+   geom_bar(show.legend = FALSE)  +
+    labs(
+    x = "",
+    y = "Count",
+    title = "Modes"
+  ) +
+  facet_wrap(~factor(playlist_name, level=level_order))+
+  scale_x_discrete(labels = c('Minor', 'Major'))+
+  theme_light()
+```
+
+```{r}
+key <- as.factor(radiohead$key)
+key <- recode(key, 
+               "0" = "C",
+               "1" = "Db",
+               "2" = "D",
+               "3" = "Eb",
+               "4" = "E",
+               "5" = "F",
+               "6" = "Gb",
+               "7" = "G",
+               "8" = "Ab",
+               "9" = "A",
+               "10" = "Bb",
+               "11" = "B")
+
+
+albums_keys <- radiohead %>%
+  ggplot(aes(x = factor(key), fill = playlist_name)) +
+   geom_bar(show.legend = FALSE)  +
+    labs(
+    x = "",
+    y = "Count",
+    title = "Keys"
+  ) +
+  facet_wrap(~factor(playlist_name, level=level_order))+
+    scale_x_discrete(labels = c('C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B')) +
+  theme_light()
+```
+
+```{r}
+albums_pop <- radiohead %>%
+  ggplot(aes(x = factor(playlist_name, level=level_order), y = track.popularity, fill = playlist_name)) +
+    labs(
+    x = "",
+    y = "Popularity",
+    title = "Popularity"
+  ) +
+  geom_boxplot(aes(alpha=0.5))+
+  theme_light() +
+    theme(
+        axis.text.x = element_text(angle=30, hjust="1"), legend.position = "none")
+```
+
+
+```{r}
+stats <- grid.arrange(albums_keys, albums_modes, albums_tempos,albums_pop, ncol=2)
+```
+
+### 3: *Melody is Dead*: The becoming of Radiohead's typical style through a chroma analysis.
+
+```{r}
+creep <- 
+    get_tidy_audio_analysis('70LcF31zb1H0PyJoS1Sx1r') %>% 
+    compmus_align(bars, segments) %>% 
+    select(bars) %>% unnest(bars) %>% 
+    mutate(
+        pitches = 
+            map(segments, 
+                compmus_summarise, pitches, 
+                method = 'rms', norm = 'euclidean')) %>% 
+    mutate(
+        timbre = 
+            map(segments, 
+                compmus_summarise, timbre, 
+                method = 'rms', norm = 'euclidean'))
+```
+
+
+```{r}
+creep_chroma <-
+  creep %>%
+    compmus_self_similarity(pitches, "cosine") %>% 
+    ggplot(
+      aes(
+        x = xstart + xduration / 2,
+        width = xduration,
+        y = ystart + yduration / 2,
+        height = yduration,
+        fill = d
+      )
+    ) +
+    geom_tile() +
+    coord_fixed() +
+    scale_fill_viridis_c(guide = "none") +
+    theme_classic() +
+    labs(x = NULL, y = NULL) +
+     theme(plot.title = element_text(size=5))+
+    ggtitle("Creep (Pablo Honey)")
+```
+
+
+```{r}
+street <- 
+    get_tidy_audio_analysis('2QwObYJWyJTiozvs0RI7CF') %>% 
+    compmus_align(bars, segments) %>% 
+    select(bars) %>% unnest(bars) %>% 
+    mutate(
+        pitches = 
+            map(segments, 
+                compmus_summarise, pitches, 
+                method = 'rms', norm = 'euclidean')) %>% 
+    mutate(
+        timbre = 
+            map(segments, 
+                compmus_summarise, timbre, 
+                method = 'rms', norm = 'euclidean'))
+```
+
+
+```{r}
+street_chroma <-
+  street %>%
+    compmus_self_similarity(pitches, "cosine") %>% 
+    ggplot(
+      aes(
+        x = xstart + xduration / 2,
+        width = xduration,
+        y = ystart + yduration / 2,
+        height = yduration,
+        fill = d
+      )
+    ) +
+    geom_tile() +
+    coord_fixed() +
+    scale_fill_viridis_c(guide = "none") +
+    theme_classic() +
+    labs(x = NULL, y = NULL) +
+     theme(plot.title = element_text(size=5))+
+    ggtitle("Street Spirit (The Bends)")
+```
+
+
+```{r}
+karma <-
+    get_tidy_audio_analysis('63OQupATfueTdZMWTxW03A') %>% 
+    compmus_align(bars, segments) %>% 
+    select(bars) %>% unnest(bars) %>% 
+    mutate(
+        pitches = 
+            map(segments, 
+                compmus_summarise, pitches, 
+                method = 'rms', norm = 'euclidean')) %>% 
+    mutate(
+        timbre = 
+            map(segments, 
+                compmus_summarise, timbre, 
+                method = 'rms', norm = 'euclidean'))
+```
+
+
+```{r}
+karma_chroma <-
+  karma %>%
+    compmus_self_similarity(pitches, "cosine") %>% 
+    ggplot(
+      aes(
+        x = xstart + xduration / 2,
+        width = xduration,
+        y = ystart + yduration / 2,
+        height = yduration,
+        fill = d
+      )
+    ) +
+    geom_tile() +
+    coord_fixed() +
+    scale_fill_viridis_c(guide = "none") +
+    theme_classic() +
+    labs(x = NULL, y = NULL) +
+     theme(plot.title = element_text(size=5))+
+    ggtitle("Karma Police (OK Computer)")
+```
+
+
+```{r}
+everything <-
+    get_tidy_audio_analysis('2kRFrWaLWiKq48YYVdGcm8') %>% 
+    compmus_align(bars, segments) %>% 
+    select(bars) %>% unnest(bars) %>% 
+    mutate(
+        pitches = 
+            map(segments, 
+                compmus_summarise, pitches, 
+                method = 'rms', norm = 'euclidean')) %>% 
+    mutate(
+        timbre = 
+            map(segments, 
+                compmus_summarise, timbre, 
+                method = 'rms', norm = 'euclidean'))
+```
+
+
+```{r}
+everything_chroma <-
+  everything %>%
+    compmus_self_similarity(pitches, "cosine") %>% 
+    ggplot(
+      aes(
+        x = xstart + xduration / 2,
+        width = xduration,
+        y = ystart + yduration / 2,
+        height = yduration,
+        fill = d
+      )
+    ) +
+    geom_tile() +
+    coord_fixed() +
+    scale_fill_viridis_c(guide = "none") +
+    theme_classic() +
+    labs(x = NULL, y = NULL) +
+     theme(plot.title = element_text(size=5))+
+    ggtitle("Everything In Its Right Place (Kid A)")
+```
+
+
+```{r}
+knives <-
+    get_tidy_audio_analysis('55q3Ro66yXWi9rsEddeEN4') %>%
+    compmus_align(bars, segments) %>% 
+    select(bars) %>% unnest(bars) %>% 
+    mutate(
+        pitches = 
+            map(segments, 
+                compmus_summarise, pitches, 
+                method = 'rms', norm = 'euclidean')) %>% 
+    mutate(
+        timbre = 
+            map(segments, 
+                compmus_summarise, timbre, 
+                method = 'rms', norm = 'euclidean'))
+```
+
+
+```{r}
+knives_chroma <-
+  knives %>%
+    compmus_self_similarity(pitches, "cosine") %>% 
+    ggplot(
+      aes(
+        x = xstart + xduration / 2,
+        width = xduration,
+        y = ystart + yduration / 2,
+        height = yduration,
+        fill = d
+      )
+    ) +
+    geom_tile() +
+    coord_fixed() +
+    scale_fill_viridis_c(guide = "none") +
+    theme_classic() +
+    labs(x = NULL, y = NULL) +
+     theme(plot.title = element_text(size=5))+
+    ggtitle("Pyramid Song(Amnesiac)")
+```
+
+
+
+```{r}
+there <-
+    get_tidy_audio_analysis('5h4y42RUKwYKYWgutNwvKP') %>% 
+    compmus_align(bars, segments) %>% 
+    select(bars) %>% unnest(bars) %>% 
+    mutate(
+        pitches = 
+            map(segments, 
+                compmus_summarise, pitches, 
+                method = 'rms', norm = 'euclidean')) %>% 
+    mutate(
+        timbre = 
+            map(segments, 
+                compmus_summarise, timbre, 
+                method = 'rms', norm = 'euclidean'))
+```
+
+
+```{r}
+there_chroma <-
+  there %>%
+    compmus_self_similarity(pitches, "cosine") %>% 
+    ggplot(
+      aes(
+        x = xstart + xduration / 2,
+        width = xduration,
+        y = ystart + yduration / 2,
+        height = yduration,
+        fill = d
+      )
+    ) +
+    geom_tile() +
+    coord_fixed() +
+    scale_fill_viridis_c(guide = "none") +
+    theme_classic() +
+    labs(x = NULL, y = NULL) +
+     theme(plot.title = element_text(size=5)) +
+    ggtitle("There, There (Hail To The Thief)")
+```
+
+
+
+```{r}
+weird <-
+    get_tidy_audio_analysis('4wajJ1o7jWIg62YqpkHC7S') %>% 
+    compmus_align(bars, segments) %>% 
+    select(bars) %>% unnest(bars) %>% 
+    mutate(
+        pitches = 
+            map(segments, 
+                compmus_summarise, pitches, 
+                method = 'rms', norm = 'euclidean')) %>% 
+    mutate(
+        timbre = 
+            map(segments, 
+                compmus_summarise, timbre, 
+                method = 'rms', norm = 'euclidean'))
+```
+
+
+```{r}
+weird_chroma <-
+  weird %>%
+    compmus_self_similarity(pitches, "cosine") %>% 
+    ggplot(
+      aes(
+        x = xstart + xduration / 2,
+        width = xduration,
+        y = ystart + yduration / 2,
+        height = yduration,
+        fill = d
+      )
+    ) +
+    geom_tile() +
+    coord_fixed() +
+    scale_fill_viridis_c(guide = "none") +
+    theme_classic() +
+    labs(x = NULL, y = NULL) +
+     theme(plot.title = element_text(size=5))+
+    ggtitle("Weird Fishes/Arpeggi (In Rainbows)")
+```
+
+
+```{r}
+lotus <-
+    get_tidy_audio_analysis('2QeutlLcJf2V1cMUUsDFT1') %>% 
+    compmus_align(bars, segments) %>% 
+    select(bars) %>% unnest(bars) %>% 
+    mutate(
+        pitches = 
+            map(segments, 
+                compmus_summarise, pitches, 
+                method = 'rms', norm = 'euclidean')) %>% 
+    mutate(
+        timbre = 
+            map(segments, 
+                compmus_summarise, timbre, 
+                method = 'rms', norm = 'euclidean'))
+```
+
+```{r}
+lotus_chroma <-
+  lotus %>%
+    compmus_self_similarity(pitches, "cosine") %>% 
+    ggplot(
+      aes(
+        x = xstart + xduration / 2,
+        width = xduration,
+        y = ystart + yduration / 2,
+        height = yduration,
+        fill = d
+      )
+    ) +
+    geom_tile() +
+    coord_fixed() +
+    scale_fill_viridis_c(guide = "none") +
+    theme_classic() +
+    labs(x = NULL, y = NULL) +
+     theme(plot.title = element_text(size=5))+
+    ggtitle("Lotus Flower (The King Of Limbs)")
+```
+
+
+```{r}
+day <-
+    get_tidy_audio_analysis('1Rd5OVjqDAr5xC96MHt448') %>% 
+    compmus_align(bars, segments) %>% 
+    select(bars) %>% unnest(bars) %>% 
+    mutate(
+        pitches = 
+            map(segments, 
+                compmus_summarise, pitches, 
+                method = 'rms', norm = 'euclidean')) %>% 
+    mutate(
+        timbre = 
+            map(segments, 
+                compmus_summarise, timbre, 
+                method = 'rms', norm = 'euclidean'))
+```
+
+
+```{r}
+day_chroma <-
+  day %>%
+    compmus_self_similarity(pitches, "cosine") %>% 
+    ggplot(
+      aes(
+        x = xstart + xduration / 2,
+        width = xduration,
+        y = ystart + yduration / 2,
+        height = yduration,
+        fill = d
+      )
+    ) +
+    geom_tile() +
+    coord_fixed() +
+    scale_fill_viridis_c(option = 'D', guide = 'none') +
+    theme_classic() +
+    labs(x = NULL, y = NULL) +
+     theme(plot.title = element_text(size=5))+
+    ggtitle("Daydreaming (A Moon Shaped Pool)")
+```
+
+
+```{r}
+chromas <- grid.arrange(creep_chroma, street_chroma, karma_chroma, everything_chroma, knives_chroma, there_chroma, weird_chroma, lotus_chroma, day_chroma, ncol = 3, nrow = 3)
+```
+
+
+### Classification
+```{r}
+radiohead_features <-
+  radiohead %>%  # For your portfolio, change this to the name of your corpus.
+  add_audio_analysis() %>% 
+  mutate(
+    playlist = factor(playlist),
+    segments = map2(segments, key, compmus_c_transpose),
+    pitches =
+      map(
+        segments,
+        compmus_summarise, pitches,
+        method = "mean", norm = "manhattan"
+      ),
+    timbre =
+      map(
+        segments,
+        compmus_summarise, timbre,
+        method = "mean",
+      )
+  ) %>%
+  mutate(pitches = map(pitches, compmus_normalise, "clr")) %>%
+  mutate_at(vars(pitches, timbre), map, bind_rows) %>%
+  unnest(cols = c(pitches, timbre))
+```
+
+```{r}
+radiohead_recipe <-
+  recipe(
+    playlist ~
+      danceability +
+      energy +
+      loudness +
+     speechiness +
+      acousticness +
+      instrumentalness +
+      liveness +
+      valence +
+      tempo +
+     duration +
+     C + `C#|Db` + D + `D#|Eb` +
+      E + `F` + `F#|Gb` + G +
+      `G#|Ab` + A + `A#|Bb` + B +
+      c01 + c02 + c03 + c04 + c05 + c06 +
+      c07 + c08 + c09 + c10 + c11 + c12,
+     # c02 + c06 + c08,
+    data = radiohead_features,          # Use the same name as the previous block.
+  ) %>%
+  step_center(all_predictors()) %>%
+  step_scale(all_predictors())      # Converts to z-scores.
+  # step_range(all_predictors())    # Sets range to [0, 1].
+```
+
+```{r}
+radiohead_cv <- radiohead_features %>% vfold_cv(10)
+```
+
+```{r}
+radiohead_forest <- 
+  workflow() %>% 
+  add_recipe(radiohead_recipe) %>% 
+  add_model(forest_model) %>% 
+  fit_resamples(
+    radiohead_cv, 
+    control = control_resamples(save_pred = TRUE)
+  )
+```
+
+```{r}
+radiohead_forest %>% get_pr()
+```
+
+
+```{r}
+radiohead_forest %>% 
+  get_conf_mat() %>% 
+  autoplot(type = "heatmap") +
+    theme(
+        axis.text.x = element_text(angle=30, hjust="1")
+  )
+```
+
+
+### 5 To B-side or not to B-side: Kid A versus Amnesiac
+```{r}
+kid <-
+  get_playlist_audio_features(
+    "thesoundsofspotify",
+    "0H7oSmnVe8kctcTbr6hYda"
+  ) %>%
+  slice(1:30) %>%
+  add_audio_analysis()
+amn <-
+  get_playlist_audio_features(
+    "thesoundsofspotify",
+    "7fuj13FdVe98ZPIo9BBWGj"
+  ) %>%
+  slice(1:30) %>%
+  add_audio_analysis()
+
+compare1 <-
+  kid %>%
+  mutate(genre = "Kid A") %>%
+  bind_rows(amn %>% mutate(genre = "Amnesiac"))
+```
+
+
+```{r}
+compare <- compare1 %>%
+  mutate(
+    timbre =
+      map(
+        segments,
+        compmus_summarise,
+        timbre,
+        method = "mean"
+      )
+  ) %>%
+  select(genre, timbre) %>%
+  compmus_gather_timbre() %>%
+  ggplot(aes(x = basis, y = value, fill = genre)) +
+  geom_violin() +
+  scale_fill_viridis_d() +
+    ylim(-55, 50) +
+
+  labs(x = "Spotify Timbre Coefficients", y = "", fill = "Album")
+```
+
+```{r}
+kid_amnesiac <-
+  bind_rows(
+    kid_a %>% mutate(playlist = "Kid A"),
+    amnesiac %>% mutate(playlist = "Amnesiac")
+  )
+```
+
+```{r}
+kid_amnesiac_features <-
+  kid_amnesiac %>%  # For your portfolio, change this to the name of your corpus.
+  add_audio_analysis() %>% 
+  mutate(
+    playlist = factor(playlist),
+    segments = map2(segments, key, compmus_c_transpose),
+    pitches =
+      map(
+        segments,
+        compmus_summarise, pitches,
+        method = "mean", norm = "manhattan"
+      ),
+    timbre =
+      map(
+        segments,
+        compmus_summarise, timbre,
+        method = "mean",
+      )
+  ) %>%
+  mutate(pitches = map(pitches, compmus_normalise, "clr")) %>%
+  mutate_at(vars(pitches, timbre), map, bind_rows) %>%
+  unnest(cols = c(pitches, timbre))
+```
+
+```{r}
+kid_amnesiac_recipe <-
+  recipe(
+    playlist ~
+     #  danceability +
+      # energy +
+      loudness +
+     #  speechiness +
+    #  acousticness +
+    #  instrumentalness +
+    #  liveness +
+    #   valence +
+    #  tempo +
+    #  duration +
+    #  C + `C#|Db` + D + `D#|Eb` +
+    #  E + `F` + `F#|Gb` + G +
+    #  `G#|Ab` + A + `A#|Bb` + B +
+     # D + C + G +
+    #   c01 + c02 + c03 + c04 + c05 + c06 +
+    #   c07 + c08 + c09 + c10 + c11 + c12,
+       c09 + c12 + c06,
+    data = kid_amnesiac_features,          # Use the same name as the previous block.
+  ) %>%
+  step_center(all_predictors()) %>%
+  step_scale(all_predictors())      # Converts to z-scores.
+  # step_range(all_predictors())    # Sets range to [0, 1].
+```
+
+
+```{r}
+kid_amnesiac_cv <- kid_amnesiac_features %>% vfold_cv(10)
+```
+
+
+
+```{r}
+kid_amnesiac_forest <- 
+  workflow() %>% 
+  add_recipe(kid_amnesiac_recipe) %>% 
+  add_model(forest_model) %>% 
+  fit_resamples(
+    kid_amnesiac_cv, 
+    control = control_resamples(save_pred = TRUE)
+  )
+```
+
+```{r}
+kid_conf <- kid_amnesiac_forest %>% get_conf_mat() %>% autoplot(type = "heatmap")
+```
+
+
+### A Moon Shaped Pool of Tears: what makes Radiohead's last album sound so sad?
+```{r}
+per_album <- ggplot(test, aes(x = meanValence, y = meanEnergy, size = meanLoudness, color = meanTempo, label=playlist_name)) +  
+  geom_point(show.legend = T, alpha=0.8) +
+    scale_size_continuous(      # Fine-tune the sizes of each point.
+    trans = "exp",            # Use an exp transformation to emphasise loud.
+  ) +
+  scale_color_continuous(      # Fine-tune the sizes of each point.
+    trans = "exp"            # Use an exp transformation to emphasise loud.
+  ) +
+  scale_colour_gradient(low="#A9C8F3", high="#0C2389") +
+  geom_text_repel(aes(label=playlist),  size=3, color="black") +
+  labs(
+    title = "Mean Valence, Energy, Loudness and Tempo per Album",
+    x = "Valence",
+    y = "Energy"
+  ) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplotly(per_album)
+```
+
+```{r}
+glass_eyes <- get_tidy_audio_analysis("0uOeAmfdyaekD2RIGwCDwq")
+bodysnatchers <- get_tidy_audio_analysis("4pWIwnnqx8k01fuF95UMIg")
+```
+
+```{r, echo = FALSE, message = FALSE, figures-side, fig.show="hold", out.width="50%"}
+
+tempo1 <- glass_eyes %>%
+  tempogram(window_size = 8, hop_size = 1, cyclic = FALSE) %>%
+  ggplot(aes(x = time, y = bpm, fill = power)) +
+  geom_raster() +
+  scale_fill_viridis_c(guide = "none") +
+  labs(x = "Time (s)", y = "Tempo (BPM)", title = "Glass Eyes") +
+  theme_classic()
+
+tempo2 <- bodysnatchers %>%
+  tempogram(window_size = 8, hop_size = 1, cyclic = FALSE) %>%
+  ggplot(aes(x = time, y = bpm, fill = power)) +
+  geom_raster() +
+  scale_fill_viridis_c(guide = "none") +
+  labs(x = "Time (s)", y = "Tempo (BPM)", title = "Bodysnatchers") +
+  theme_classic()
+```
+
