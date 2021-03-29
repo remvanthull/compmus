@@ -385,6 +385,7 @@ stats <- grid.arrange(albums_keys, albums_modes, albums_tempos,albums_pop, ncol=
 ![](chromas.png){width=90%}<br><br>
 
 ***
+On the left, we can see nine self-similarity matrixes of the chromagrams from songs from nine different Radiohead songs, each from a different album. Chroma tells us something about the pitch in the song. Blocks show homogenuity in chroma, vertical parallel lines show repitition in chroma and vertical yellow lines show changes in chroma.<br>
 For the comparisons of individual songs from the albums, I chose the song that is most popular according to Spotify. This seemed to me like a good representation of the general feel of the album to listeners, as an album’s most popular song is often the song that people hear most and therefore the the song people associate the album with. To me at least, each song represents my general perception of the album’s style well.<br><br>
 In the chromagrams, parallel diagonal lines show that the songs from first three albums all contain repetitions of some sort of melody or riff. As humans often like repetition within a song, the songs’ characteristic melodies most likely contributed to their popularity. For ***Creep*** and ***Street Spirit***, the repetition of melodies and song structures are most evident, with both songs containing a repeated riff throughout the entire song and  clear vertical yellow lines for where a section such as a chorus or verse starts. ***Karma Police*** consists of two different parts and with that two different melodies, the transition being around 2:32. When looking at these two parts separately, the repeating melodies become clear.<br><br>
 A clear change happens when we move onto ***Kid A***: sure enough, *melody is dead*. The song’s structure is clear and a distinction between the verses, chorusses, and bridge remains, yet there is no distinct repeating melody. For ***Amnesiac***, there is some repitition, but the song’s structure is nowhere to be found. The start of the song even appears to have no cohesian at all, most likely due to the fact that this part only contains a piano being played according to an irregular tempo. It is only after 2 minutes, when percussion sets in, that some homogeneity occurs. The irregular melodies and lack of structure within both of these songs make them sound uncomfortable and eerie, clearly displaying the band’s state of mind at the time.<br><br>
@@ -417,9 +418,9 @@ It appears that the classifier has a hard time accurately distinguishing each al
 
 ***
 As said before, ***Amnesiac*** is often said to be ***Kid A***'s "B-side" as both albums were recorded during the same sessions, but the band claims the albums each portray something different: ***Kid A*** portraying watching depression from a distance, and ***Amnesiac*** portraying experiencing it first hand. Within our previous classifier, the albums, along with most albums within that style period, were hard to distinguish. When training a random forest classifier on only *Kid A* and *Amnesiac* using all features, we obtain the following importance for each feature<br><br>
-![](kida.png){width=70%}<br><br><br>
-and the following (bad) precision and recall when classiying the albums <br>
-![](slecht.png){width=70%}<br><br>
+![](kida.png){width=70%}<br><br>
+and the following (bad) precision and recall when classiying the albums <br><br>
+![](slecht.png){width=70%}<br>
 <br> meaning the classifier mixed the albums up most of the time. However, when taking the importance of features into account, removing unimportant features greatly improves classification. When taking the first four features, so **loudness** and **the twelth, ninth and sixth timbre component**, we get the results as displayed in the confusion matrix on the left. Further looking into a comparison of the timbre components of both the albums confirms that the albums differ in said components most. <br><br>
 There thus indeed seems to be a difference between *Kid A* and *Amnesiac*. However, the model needed to look specifically at timbre components to distinguish them, and what those timbre components exactly are in terms of sound are hard to determine. With that, timbre componentsare hard for humans to hear, so which leaves only loudness as a metric for humans to distinguish the albums by ear, possibly contributing to the reason that humans *can't* and a computer *can* see the difference between the albums.
 
@@ -437,5 +438,24 @@ The tempogram of ***Glass Eyes*** shows that the song’s tempo is very inconsis
 For ***Bodysnatchers*** however, the complete opposite holds. The tempo is very clear and steady, and also quite high. Whereas the Spotify API records a tempo of about 167 BPM, the tempogram displays a very clear line at two times this tempo (334 BPM). In fact, the tempogram does not show anything at the actual tempo of 167 BPM. In any case, the clear, steady and high tempo of the song make it very energetic and happy sounding.<br>
 
 
-### **Conclusion**
+### **Final thougths**{data-commentary-width=550}
 
+![](logo2.png){width=90%}
+
+***
+From the analysis of Radiohead's style evolutions using Spotify features, we have made some interesting remarks. 
+* The history behind Radiohead's nine albums was clearly reflected in changes in loudness, energy and valence, all dropping when personal circumstances were bad and rising when they were good. 
+* Radiohead's music is never "angry" in terms of valence and energy.
+* Radiohead's saddest albums suprisingly mostly use major modes.
+* In their first three albums, Radiohead used a clear repitition of a melody in their songs, which we can clearly see being absent in ***Kid A*** and ***Amnesiac***, reflecting the result of the band's writers block and new mindset. With ***Hail To The Thief***, melody returns.
+* Radiohead's happier songs use a steady tempo making them energetic and easy to follow the rhythm by tapping along, while with sad songs the tempo is all over the place making it impossible to tap along to and not energetic at all. <br>
+
+From the classification it became clear that Radiohead's music can be devided into two periods, namely
+* Period 1: ***Pablo Honey***, ***The Bends*** and ***OK Computer***
+* Period 2: ***Kid A***, ***Amnesiac***, ***Hail To The Thief***, ***In Rainbows*** and ***A Moon Shaped Pool***
+with ***The King Of Limbs*** being its own period as the album is so experimental.<br><br>
+Furthermore, it became clear that timbre coefficients, while mostly unhearable to the human ear, play an important role in the computational analysis of music. Using these coefficients, one can also distinguish ***Kid A***  from ***Amnesiac***.<br>
+
+This analysis is specific to one band, but the same computations can be applied to analyze other collections of music. The current results could be used when trying to replicate components of Radiohead's style, or just to get more insight in what certain features cause in terms of sound and style. Or it can even simply be used by listeners of Radiohead, that want to listen to songs or albums with particular features, such as only happy or only sad songs.<br>
+
+The insight that timbre is so important within a certain musical style calls for further research, as right now we have established which components contribute to different styles but not exactly what they *are*.
